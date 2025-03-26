@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Structure</title>
+    <style>
+        ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        .nested {
+            display: none;
+        }
+        .active {
+            display: block;
+        }
+        .toggle-btn {
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Organization Structure</h1>
+    <ul id="orgStructure">
+        {% for node in org_data %}
+            {% if node.node_level == 0 %}
+                <li>
+                    <span class="toggle-btn" onclick="toggleVisibility('{{ node.node_role }}')">{{ node.node_name }}</span>
+                    <a href="{{ node.node_info_link }}" target="_blank">Info</a>
+                    <ul class="nested" id="{{ node.node_role }}">
+                        {% for child in org_data %}
+                            {% if child.parent_node_role == node.node_role %}
+                                <li>
+                                    <span class="toggle-btn" onclick="toggleVisibility('{{ child.node_role }}')">{{ child.node_name }}</span>
+                                    <a href="{{ child.node_info_link }}" target="_blank">Info</a>
+                                    <ul class="nested" id="{{ child.node_role }}">
+                                        {% for grandchild in org_data %}
+                                            {% if grandchild.parent_node_role == child.node_role %}
+                                                <li>
+                                                    <span class="toggle-btn" onclick="toggleVisibility('{{ grandchild.node_role }}')">{{ grandchild.node_name }}</span>
+                                                    <a href="{{ grandchild.node_info_link }}" target="_blank">Info</a>
+                                                    <ul class="nested" id="{{ grandchild.node_role }}">
+                                                        {% for great_grandchild in org_data %}
+                                                            {% if great_grandchild.parent_node_role == grandchild.node_role %}
+                                                                <li>
+                                                                    {{ great_grandchild.node_name }} 
+                                                                    <a href="{{ great_grandchild.node_info_link }}" target="_blank">Info</a>
+                                                                </li>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+
+    <script>
+        function toggleVisibility(nodeRole) {
+            var element = document.getElementById(nodeRole);
+            element.classList.toggle("active");
+        }
+    </script>
+</body>
+</html>

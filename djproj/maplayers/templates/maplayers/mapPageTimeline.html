@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+
+{% block title %}Region Time Data Visualization{% endblock %}
+
+{% block extra_css %}
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Timeline CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.css" />
+    
+    <!-- noUiSlider CSS for better timeline control -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+    
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        #timeline-container {
+            margin: 20px;
+            padding: 10px;
+            background:rgb(136, 197, 247);
+            border-radius: 5px;
+        }
+        #timeline-slider {
+            margin: 10px 0;
+            height: 10px;
+        }
+        #info-panel {
+            margin: 20px;
+            padding: 15px;
+            background:rgb(128, 182, 252);
+            border-radius: 5px;
+            display: none;
+        }
+        .leaflet-popup-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .time-label {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="map"></div>
+    
+    <div id="timeline-container">
+        <h3>Time Control</h3>
+        <div id="timeline-slider"></div>
+        <div class="time-label">Selected time: <span id="time-value">2023</span></div>
+    </div>
+    
+    <div id="info-panel">
+        <h3>Region Information</h3>
+        <div id="region-name"></div>
+        <div id="region-data"></div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Timeline Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.js"></script>
+    
+    <!-- noUiSlider for better timeline control -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const map = L.map('map').setView([37.8, -96], 4);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            const timeData = {{ time_data|safe }};
+            
+            function getColor(value) {
+                return value > 85 ? '#084594' :
+                    value > 75 ? '#2171b5' :
+                    value > 65 ? '#4292c6' :
+                    value > 55 ? '#6baed6' :
+                    value > 45 ? '#9ecae1' :
+                    '#deebf7';
+            }
+            
+            function style(feature, year) {
+                const timeInfo = feature.properties.times.find(t => t.year === year);
+                const value = timeInfo ? timeInfo.value : 0;
+                return {
+                    fillColor: getColor(value),
+                    weight: 2,
+                    opacity: 1,
+                    color: 'white',
+                    dashArray: '3',
+                    fillOpacity: 0.7
+                };
+            }
+            
+            let currentYear = 2023;
+            let currentLayers = [];
+            
+            function updateMap(year) {
+                currentLayers.forEach(layer => map.removeLayer(layer));
+                currentLayers = [];
+                
+                timeData.features.forEach(feature => {
+                    const timeInfo = feature.properties.times.find(t => t.year === year);
+                    if (timeInfo) {
+                        const layer = L.geoJSON(feature, {
+                            style: () => style(feature, year),
+                            onEachFeature: (feature, layer) => {
+                                layer.on('click', (e) => {
+                                    document.getElementById('info-panel').style.display = 'block';
+                                    document.getElementById('region-name').innerHTML = `<h4>${feature.properties.name}</h4>`;
+                                    document.getElementById('region-data').innerHTML = `
+                                        <p>Year: ${timeInfo.year}</p>
+                                        <p>Value: ${timeInfo.value}</p>
+                                        <p>${timeInfo.description}</p>`;
+                                    layer.setStyle({
+                                        weight: 5,
+                                        color: '#666',
+                                        dashArray: '',
+                                        fillOpacity: 0.7
+                                    });
+                                });
+                                layer.bindPopup(`<b>${feature.properties.name}</b><br>Year: ${timeInfo.year}<br>Value: ${timeInfo.value}`);
+                            }
+                        });
+                        layer.addTo(map);
+                        currentLayers.push(layer);
+                    }
+                });
+                document.getElementById('time-value').textContent = year;
+            }
+            
+            const slider = document.getElementById('timeline-slider');
+            noUiSlider.create(slider, {
+                start: [2023],
+                connect: true,
+                step: 1,
+                range: { 'min': 2020, 'max': 2023 },
+                format: { to: value => Math.round(value), from: value => Math.round(value) }
+            });
+            
+            slider.noUiSlider.on('update', function (values, handle) {
+                currentYear = parseInt(values[handle]);
+                updateMap(currentYear);
+            });
+            
+            updateMap(currentYear);
+        });
+    </script>
+{% endblock %}

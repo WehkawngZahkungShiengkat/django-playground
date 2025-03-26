@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block title %}
+{{post.title}}
+{% endblock %}
+
+{% block content %}
+<section>
+    <img class="banner" src="{{ post.banner.url }}" alt="{{ post.title }}"/>
+    <h1>{{ post.title }}</h1>
+    <p>{{ post.date }}</p>
+    <p>{{ post.body }}</p>
+    <hr>
+    <p>Comments</p>
+    <div>
+        {% for comment in post.comments.all %}
+            <h3>{{ comment.author }}</h3>
+            <p>{{ comment.body }}</p>
+            <p><b>{{ comment.date }}</b></p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

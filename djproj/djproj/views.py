@@ -1,0 +1,63 @@
+import json
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def homepage(request):
+    # return HttpResponse("Hello World! I'm Home.")
+    return render(request, 'home.html')
+
+def aboutpage(request):
+    # return HttpResponse("My About Page.")
+    return render(request, 'about.html')
+
+def org_structure(request):
+    org_data = [
+        {"node_name": "root_node", "node_level": 0, "node_role": "zero", "parent_node_role": None, "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 1", "node_level": 1, "node_role": "one", "parent_node_role": "zero", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 2.a", "node_level": 2, "node_role": "two a", "parent_node_role": "one", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 2.b", "node_level": 2, "node_role": "two b", "parent_node_role": "one", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 2.c", "node_level": 2, "node_role": "two c", "parent_node_role": "one", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.a", "node_level": 3, "node_role": "three a", "parent_node_role": "two a", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.b", "node_level": 3, "node_role": "three b", "parent_node_role": "two a", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.c", "node_level": 3, "node_role": "three c", "parent_node_role": "two b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.d", "node_level": 3, "node_role": "three d", "parent_node_role": "two c", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.a", "node_level": 4, "node_role": "four a", "parent_node_role": "three a", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.b", "node_level": 4, "node_role": "four b", "parent_node_role": "three b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.c", "node_level": 4, "node_role": "four c", "parent_node_role": "three b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.d", "node_level": 4, "node_role": "four d", "parent_node_role": "three c", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.e", "node_level": 4, "node_role": "four e", "parent_node_role": "three d", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.f", "node_level": 4, "node_role": "four f", "parent_node_role": "three d", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.a", "node_level": 5, "node_role": "five a", "parent_node_role": "four b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.b", "node_level": 5, "node_role": "five b", "parent_node_role": "four c", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.c", "node_level": 5, "node_role": "five c", "parent_node_role": "four d", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.d", "node_level": 5, "node_role": "five d", "parent_node_role": "four e", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 6.a", "node_level": 6, "node_role": "six a", "parent_node_role": "five d", "node_info_link": "wwww.example-info.com"}
+    ]
+    
+    return render(request, 'org_structure.html', {'org_data': org_data})
+
+def d3_org_structure(request):
+    org_data = [
+        {"node_name": "root_node", "node_level": 0, "node_role": "zero", "parent_node_role": None, "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 1", "node_level": 1, "node_role": "one", "parent_node_role": "zero", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 2.a", "node_level": 2, "node_role": "two a", "parent_node_role": "one", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 2.b", "node_level": 2, "node_role": "two b", "parent_node_role": "one", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 2.c", "node_level": 2, "node_role": "two c", "parent_node_role": "one", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.a", "node_level": 3, "node_role": "three a", "parent_node_role": "two a", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.b", "node_level": 3, "node_role": "three b", "parent_node_role": "two a", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.c", "node_level": 3, "node_role": "three c", "parent_node_role": "two b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 3.d", "node_level": 3, "node_role": "three d", "parent_node_role": "two c", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.a", "node_level": 4, "node_role": "four a", "parent_node_role": "three a", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.b", "node_level": 4, "node_role": "four b", "parent_node_role": "three b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.c", "node_level": 4, "node_role": "four c", "parent_node_role": "three b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.d", "node_level": 4, "node_role": "four d", "parent_node_role": "three c", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.e", "node_level": 4, "node_role": "four e", "parent_node_role": "three d", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 4.f", "node_level": 4, "node_role": "four f", "parent_node_role": "three d", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.a", "node_level": 5, "node_role": "five a", "parent_node_role": "four b", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.b", "node_level": 5, "node_role": "five b", "parent_node_role": "four c", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.c", "node_level": 5, "node_role": "five c", "parent_node_role": "four d", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 5.d", "node_level": 5, "node_role": "five d", "parent_node_role": "four e", "node_info_link": "wwww.example-info.com"},
+        {"node_name": "node 6.a", "node_level": 6, "node_role": "six a", "parent_node_role": "five d", "node_info_link": "wwww.example-info.com"}
+    ]
+    
+    return render(request, 'd3_org_structure.html', {'org_data': json.dumps(org_data)})

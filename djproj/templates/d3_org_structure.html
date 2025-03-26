@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Structure Treemap</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .treemap {
+            width: 100%;
+            height: 600px;
+            margin: auto;
+        }
+        .node {
+            border: 1px solid #fff;
+            display: block;
+            text-align: center;
+            overflow: hidden;
+            color: blue;
+            font-size: 12px;
+        }
+        .node:hover {
+            opacity: 0.8;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Organization Structure Treemap</h1>
+    <div class="treemap" id="treemap"></div>
+
+    <script>
+        // Parse the organization data passed from Django view
+        const orgData = {{ org_data|safe }};
+
+        // Prepare the data for D3 hierarchy
+        function createHierarchy(data) {
+            const root = { "name": "root", "children": [] };
+
+            // Create hierarchy structure
+            data.forEach(item => {
+                const parts = item.node_role.split('.');
+                let currentLevel = root;
+
+                parts.forEach((part, index) => {
+                    let child = currentLevel.children.find(c => c.name === part);
+                    if (!child) {
+                        child = { name: part, children: [] };
+                        currentLevel.children.push(child);
+                    }
+                    currentLevel = child;
+                });
+            });
+
+            return root;
+        }
+
+        const root = createHierarchy(orgData);
+
+        // Set up the treemap layout
+        const width = document.getElementById('treemap').offsetWidth;
+        const height = 600;
+
+        const treemap = d3.treemap()
+            .size([width, height])
+            .padding(1);
+
+        const rootNode = d3.hierarchy(root)
+            .sum(d => d.children ? 0 : 1); // Size nodes based on number of children
+
+        treemap(rootNode);
+
+        const svg = d3.select("#treemap").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const node = svg.selectAll(".node")
+            .data(rootNode.leaves())
+            .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+        node.append("rect")
+            .attr("width", d => d.x1 - d.x0)
+            .attr("height", d => d.y1 - d.y0)
+            .style("fill", "#4CAF50");
+
+        node.append("text")
+            .attr("x", 5)
+            .attr("y", 15)
+            .text(d => d.data.name)
+            .style("fill", "#fff")
+            .style("font-size", "12px")
+            .style("font-weight", "bold");
+
+        // Add click to expand functionality
+        node.on("click", function(event, d) {
+            console.log(d.data);
+            window.open(d.data.node_info_link, "_blank");
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,310 @@
+{% extends "layout.html" %}
+
+{% block title %}Region Time Data Visualization{% endblock %}
+
+{% block extra_css %}
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Timeline CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.css" />
+    
+    <!-- noUiSlider CSS for better timeline control -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+    
+    <style>
+        #map_div {
+            height: 800px;
+            width: max(60vw, 560px);
+            background: white;
+            margin: 0 auto;
+            position: relative;
+        }
+        #main_map {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #side-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            border-right: 2px solid gray;
+            z-index: 1000;
+            padding: 10px;
+            color: white;
+        }
+        #mini-map {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0);
+        }
+        #timeline-container {
+            margin: 20px;
+            padding: 10px;
+            background:rgb(136, 197, 247);
+            border-radius: 5px;
+            display: none;
+        }
+        #timeline-slider {
+            margin: 10px 0;
+            height: 10px;
+        }
+        #info-panel {
+            margin: 20px;
+            padding: 15px;
+            background:rgb(128, 182, 252);
+            border-radius: 5px;
+            display: none;
+        }
+        .leaflet-popup-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .time-label {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="map_div">
+        <div id="side-panel">
+            <h3 id="polygon-title">Polygon Info</h3>
+            <p id="polygon-description">Click a polygon to see details.</p>
+            <div id="mini-map"></div>
+            <div id="region-data"></div>
+        </div>
+        <div id="main_map"></div>
+    </div>
+    
+    <div id="timeline-container">
+        <h3>Time Control</h3>
+        <div id="timeline-slider"></div>
+        <div class="time-label">Selected time: <span id="time-value">2023</span></div>
+    </div>
+    
+    <div id="info-panel">
+        <h3>Region Information</h3>
+        <div id="region-name"></div>
+        <p>Any other info go here</p>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Timeline Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.js"></script>
+    
+    <!-- noUiSlider for better timeline control -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const map = L.map('main_map',{
+                zoomControl: false, // Removes the zoom control buttons (+/-)
+                // scrollWheelZoom: false, // Disables zooming with the mouse wheel
+                doubleClickZoom: false, // Disables zooming by double-clicking
+                touchZoom: false, // Disables pinch-zoom on touch devices
+                dragging: true // Keeps dragging enabled (set to false to disable panning)
+            }).setView([20, 96.8], 6);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            const mapData = {{ map_data|safe }};
+            
+            function getColor(value) {
+                return value > 85 ? '#084594' :
+                    value > 75 ? '#2171b5' :
+                    value > 65 ? '#4292c6' :
+                    value > 55 ? '#6baed6' :
+                    value > 45 ? '#9ecae1' :
+                    '#deebf7';
+            }
+            
+            // function style(feature, year) {
+            function style(feature) {
+                // const timeInfo = feature.properties.times.find(t => t.year === year);
+                // const value = timeInfo ? timeInfo.value : 0;
+                return {
+                    // fillColor: getColor(value),
+                    fillColor: '#4292c6',
+                    weight: 2,
+                    opacity: 1,
+                    color: 'white',
+                    dashArray: '3',
+                    fillOpacity: 0.7
+                };
+            }
+            
+            let currentYear = 2023;
+            let currentLayers = [];
+
+            let current_selected_layer = null;
+
+            function updateMap() {
+                currentLayers.forEach(layer => map.removeLayer(layer));
+                currentLayers = [];
+
+                mapData.features.forEach(feature => {
+                    const layer = L.geoJSON(feature, {
+                        style: () => style(feature), 
+                        onEachFeature: (feature, layer) => {
+                            // Show the popup on hover
+                            layer.on("mouseover", function() {
+                                // Show the popup on hover
+                                layer.bindPopup(`<b>${feature.properties.ST}</b><br>Township Name: ${feature.properties.TS}<br>Township Name in Myanmar: ${feature.TS_MMR}`).openPopup();
+
+                                // Highlight the polygon on hover
+                                layer.setStyle({
+                                    weight: 4,
+                                    color: 'white',
+                                    dashArray: '1',
+                                });
+                            });
+
+                            // Reset style when mouse leaves
+                            layer.on("mouseout", function() {
+                                layer.closePopup();
+                                layer.setStyle({
+                                    weight: 2,
+                                    color: 'white',
+                                    dashArray: '3',
+                                });
+                                // layer.setStyle(style(feature)); // Resets to the original style
+                            });
+
+                            layer.on('click', (e) => {
+                                handlePolygonClick(layer, feature)
+                            });
+                            // Calculate the centroid of the polygon
+                            const center = layer.getBounds().getCenter();
+
+                            // Create a number or text to display (for example, based on the feature index or value)
+                            const numberLabel = feature.properties.OBJECTID;  // You can replace with any field like feature.ST or feature.properties.value
+
+                            // Add the label as a marker with a custom div icon
+                            const labelMarker = L.marker(center, {
+                                icon: L.divIcon({
+                                    className: 'polygon-number-label',  // Custom class for styling
+                                    html: `<p style="color: black; font-size: 9px; font-weight: bold;">${numberLabel}</p>`,
+                                    iconSize: [20, 20]  // Size of the number display
+                                })
+                            }).addTo(map);
+
+                            // Add click event to the number label marker
+                            labelMarker.on('click', function(e) {
+                                handlePolygonClick(layer, feature);  // Trigger the same click functionality
+                            });
+
+                            // Set style when mouse over
+                            labelMarker.on("mouseover", function() {
+                                // Show the popup on hover
+                                layer.bindPopup(`<b>${feature.properties.ST}</b><br>Township Name: ${feature.properties.TS}<br>Township Name in Myanmar: ${feature.TS_MMR}`).openPopup();
+
+                                // Highlight the polygon on hover
+                                layer.setStyle({
+                                    weight: 4,
+                                    color: 'white',
+                                    dashArray: '1',
+                                });
+                            });
+
+                            // Reset style when mouse leaves
+                            labelMarker.on("mouseout", function() {
+                                layer.closePopup();
+                                layer.setStyle({
+                                    weight: 2,
+                                    color: 'white',
+                                    dashArray: '3',
+                                });
+                                // layer.setStyle(style(feature)); // Resets to the original style
+                            });
+                        }
+                    });
+                    layer.addTo(map);
+                    currentLayers.push(layer);
+                });
+
+                function handlePolygonClick(layer, feature) {
+                    // Reset previous selected layer's style if any
+                    if (current_selected_layer) {
+                        current_selected_layer.setStyle({
+                            fillColor: '#4292c6',  // Reset to original color
+                            fillOpacity: 0.7
+                        });
+                    }
+
+                    document.getElementById('polygon-title').innerHTML = `<h3>${feature.properties.TS} Township Info</h3>`;
+                    document.getElementById('polygon-description').innerHTML = `<p>${feature.properties.ST}>${feature.properties.DT}>${feature.properties.TS}</p>`;
+                    document.getElementById('info-panel').style.display = 'block';
+                    document.getElementById('region-name').innerHTML = `<h4>${feature.properties.ST}</h4>`;
+                    document.getElementById('region-data').innerHTML = `
+                        <p>State Name: ${feature.properties.ST}</p>
+                        <p>State Postcode: ${feature.properties.ST_PCODE}</p>
+                        <p>DT Name: ${feature.properties.DT}</p>
+                        <p>DT Postcode: ${feature.properties.DT_PCODE}</p>
+                        <p>Township Name: ${feature.properties.TS}</p>
+                        <p>Township Postcode: ${feature.properties.TS_PCODE}</p>
+                        <p>Township Name in Myanmar: ${feature.properties.TS_MMR}</p>`;
+                    layer.setStyle({
+                        fillColor: 'red',
+                        fillOpacity: 0.7
+                    });
+                    current_selected_layer = layer;
+
+                    // Initialize or update mini-map
+                    if (!window.miniMap) {
+                        window.miniMap = L.map("mini-map", { 
+                            zoomControl: false,
+                            dragging: false,
+                            doubleClickZoom: false,
+                            scrollWheelZoom: false,
+                            boxZoom: false,
+                            keyboard: false,
+                            attributionControl: false,
+                            interactive: false // Disables interaction
+                        }).setView(layer.getBounds().getCenter(), 5);
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(window.miniMap);
+                    } else {
+                        window.miniMap.setView(layer.getBounds().getCenter(), 8);
+                        window.miniMap.eachLayer((l) => { if (l instanceof L.Polygon) window.miniMap.removeLayer(l); });
+                    }
+
+                    // Add the selected polygon to the mini-map
+                    L.geoJSON(feature, { style: { color: "transparent", fillColor: "red", fillOpacity: 0.7 } }).addTo(window.miniMap);
+
+                    // Fit the polygon within the mini-map
+                    window.miniMap.fitBounds(layer.getBounds());
+                }
+            }
+            
+            const slider = document.getElementById('timeline-slider');
+            noUiSlider.create(slider, {
+                start: [2023],
+                connect: true,
+                step: 1,
+                range: { 'min': 2020, 'max': 2023 },
+                format: { to: value => Math.round(value), from: value => Math.round(value) }
+            });
+            
+            slider.noUiSlider.on('update', function (values, handle) {
+                currentYear = parseInt(values[handle]);
+                updateMap();
+            });
+            
+            updateMap();
+        });
+    </script>
+{% endblock %}

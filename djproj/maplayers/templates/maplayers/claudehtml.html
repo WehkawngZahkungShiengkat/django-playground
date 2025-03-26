@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Region Time Data Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Timeline CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.css" />
+    
+    <!-- noUiSlider CSS for better timeline control -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        #timeline-container {
+            margin: 20px;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 5px;
+        }
+        #timeline-slider {
+            margin: 10px 0;
+            height: 10px;
+        }
+        #info-panel {
+            margin: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            display: none;
+        }
+        .leaflet-popup-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .time-label {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div id="timeline-container">
+        <h3>Time Control</h3>
+        <div id="timeline-slider"></div>
+        <div class="time-label">Selected time: <span id="time-value">2023</span></div>
+    </div>
+    
+    <div id="info-panel">
+        <h3>Region Information</h3>
+        <div id="region-name"></div>
+        <div id="region-data"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Timeline Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.js"></script>
+    
+    <!-- noUiSlider for better timeline control -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([37.8, -96], 4);
+        
+        // Add base tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Sample data with time information - this would be your GeoJSON with time properties
+        // Format follows GeoJSON with added time properties
+        const timeData = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "name": "California",
+                        "times": [
+                            {
+                                "year": 2020,
+                                "value": 75,
+                                "description": "California data for 2020"
+                            },
+                            {
+                                "year": 2021,
+                                "value": 82,
+                                "description": "California data for 2021"
+                            },
+                            {
+                                "year": 2022,
+                                "value": 65,
+                                "description": "California data for 2022"
+                            },
+                            {
+                                "year": 2023,
+                                "value": 90,
+                                "description": "California data for 2023"
+                            }
+                        ]
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [-124.4, 32.5],
+                            [-124.4, 42.0],
+                            [-120.0, 42.0],
+                            [-120.0, 39.0],
+                            [-114.6, 35.0],
+                            [-114.6, 32.5],
+                            [-124.4, 32.5]
+                        ]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "name": "Texas",
+                        "times": [
+                            {
+                                "year": 2020,
+                                "value": 60,
+                                "description": "Texas data for 2020"
+                            },
+                            {
+                                "year": 2021,
+                                "value": 55,
+                                "description": "Texas data for 2021"
+                            },
+                            {
+                                "year": 2022,
+                                "value": 70,
+                                "description": "Texas data for 2022"
+                            },
+                            {
+                                "year": 2023,
+                                "value": 65,
+                                "description": "Texas data for 2023"
+                            }
+                        ]
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [-106.6, 31.8],
+                            [-106.6, 36.5],
+                            [-100.0, 36.5],
+                            [-100.0, 34.5],
+                            [-94.0, 34.5],
+                            [-94.0, 29.7],
+                            [-97.0, 26.0],
+                            [-106.6, 31.8]
+                        ]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {
+                        "name": "New York",
+                        "times": [
+                            {
+                                "year": 2020,
+                                "value": 85,
+                                "description": "New York data for 2020"
+                            },
+                            {
+                                "year": 2021,
+                                "value": 78,
+                                "description": "New York data for 2021"
+                            },
+                            {
+                                "year": 2022,
+                                "value": 90,
+                                "description": "New York data for 2022"
+                            },
+                            {
+                                "year": 2023,
+                                "value": 88,
+                                "description": "New York data for 2023"
+                            }
+                        ]
+                    },
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[
+                            [-79.7, 42.0],
+                            [-79.7, 45.0],
+                            [-73.3, 45.0],
+                            [-73.3, 40.5],
+                            [-74.7, 40.5],
+                            [-79.7, 42.0]
+                        ]]
+                    }
+                }
+            ]
+        };
+        
+        // Style function based on value
+        function getColor(value) {
+            return value > 85 ? '#084594' :
+                   value > 75 ? '#2171b5' :
+                   value > 65 ? '#4292c6' :
+                   value > 55 ? '#6baed6' :
+                   value > 45 ? '#9ecae1' :
+                                '#deebf7';
+        }
+        
+        function style(feature, year) {
+            // Find the time data for this year
+            const timeInfo = feature.properties.times.find(t => t.year === year);
+            const value = timeInfo ? timeInfo.value : 0;
+            
+            return {
+                fillColor: getColor(value),
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+        }
+        
+        // Variables to keep track of the current year and layers
+        let currentYear = 2023;
+        let currentLayers = [];
+        
+        // Function to update the map based on the selected year
+        function updateMap(year) {
+            // Remove old layers
+            currentLayers.forEach(layer => map.removeLayer(layer));
+            currentLayers = [];
+            
+            // Add new layers based on the selected year
+            timeData.features.forEach(feature => {
+                const timeInfo = feature.properties.times.find(t => t.year === year);
+                
+                if (timeInfo) {
+                    const layer = L.geoJSON(feature, {
+                        style: () => style(feature, year),
+                        onEachFeature: (feature, layer) => {
+                            layer.on({
+                                click: (e) => {
+                                    // Display information when a region is clicked
+                                    const infoPanel = document.getElementById('info-panel');
+                                    const regionName = document.getElementById('region-name');
+                                    const regionData = document.getElementById('region-data');
+                                    
+                                    infoPanel.style.display = 'block';
+                                    regionName.innerHTML = `<h4>${feature.properties.name}</h4>`;
+                                    regionData.innerHTML = `
+                                        <p>Year: ${timeInfo.year}</p>
+                                        <p>Value: ${timeInfo.value}</p>
+                                        <p>${timeInfo.description}</p>
+                                    `;
+                                    
+                                    // Highlight the selected feature
+                                    layer.setStyle({
+                                        weight: 5,
+                                        color: '#666',
+                                        dashArray: '',
+                                        fillOpacity: 0.7
+                                    });
+                                }
+                            });
+                            
+                            // Add a popup with basic information
+                            layer.bindPopup(`
+                                <b>${feature.properties.name}</b><br>
+                                Year: ${timeInfo.year}<br>
+                                Value: ${timeInfo.value}
+                            `);
+                        }
+                    });
+                    
+                    layer.addTo(map);
+                    currentLayers.push(layer);
+                }
+            });
+            
+            // Update the time display
+            document.getElementById('time-value').textContent = year;
+        }
+        
+        // Initialize timeline slider
+        const slider = document.getElementById('timeline-slider');
+        noUiSlider.create(slider, {
+            start: [2023],
+            connect: true,
+            step: 1,
+            range: {
+                'min': 2020,
+                'max': 2023
+            },
+            format: {
+                to: value => Math.round(value),
+                from: value => Math.round(value)
+            }
+        });
+        
+        // Update map when slider changes
+        slider.noUiSlider.on('update', function (values, handle) {
+            const year = parseInt(values[handle]);
+            currentYear = year;
+            updateMap(year);
+        });
+        
+        // Initialize the map with the default year
+        updateMap(currentYear);
+        
+        // Add a legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            const grades = [0, 45, 55, 65, 75, 85];
+            const labels = [];
+            
+            // Loop through our density intervals and generate a label with a colored square for each interval
+            div.innerHTML = '<h4>Value</h4>';
+            for (let i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '; width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7;"></i> ' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+            
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+</body>
+</html>
