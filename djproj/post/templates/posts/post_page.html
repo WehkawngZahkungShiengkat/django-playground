@@ -6,10 +6,15 @@
 
 {% block content %}
 <section>
+    {% if not html_content %}
     <img class="banner" src="{{ post.banner.url }}" alt="{{ post.title }}"/>
+    {% endif %}
     <h1>{{ post.title }}</h1>
     <p>{{ post.date }}</p>
     <p>{{ post.body }}</p>
+    {% if html_content %}
+    {{ html_content|safe }}      
+    {% endif %}
     <hr>
     <p>Comments</p>
     <div>

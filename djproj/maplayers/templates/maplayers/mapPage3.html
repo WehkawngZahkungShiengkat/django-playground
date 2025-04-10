@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+
+{% block title %}Region Time Data Visualization{% endblock %}
+
+{% block extra_css %}
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Timeline CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.css" />
+    
+    <!-- noUiSlider CSS for better timeline control -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" />
+    
+    <style>
+        #dashboard_display_full {
+            width: 100%;
+            height: 100%;
+            position: relative; /* Important for child absolute positioning */
+        }
+        #map_div {
+            background: white;
+            margin: 0 auto;
+            position: relative;
+        }
+        #main_map {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #side-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            border-right: 2px solid gray;
+            z-index: 1000;
+            padding: 10px;
+            color: white;
+        }
+        #mini-map {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0);
+        }
+        #timeline-container {
+            margin: 20px;
+            padding: 10px;
+            background:rgb(136, 197, 247);
+            border-radius: 5px;
+            display: none;
+        }
+        #timeline-slider {
+            margin: 10px 0;
+            height: 10px;
+        }
+        #info-panel {
+            margin: 20px;
+            padding: 15px;
+            background:rgb(128, 182, 252);
+            border-radius: 5px;
+            display: none;
+        }
+        .leaflet-popup-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .time-label {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .map-container {
+            height: 600px;
+            width: 100%;
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>Myanmar Regions Border Map</h1>
+    {{ dashboard_html|safe }}
+    
+    <div id="timeline-container">
+        <h3>Time Control</h3>
+        <div id="timeline-slider"></div>
+        <div class="time-label">Selected time: <span id="time-value">2023</span></div>
+    </div>
+    
+    <div id="info-panel">
+        <h3>Region Information</h3>
+        <div id="region-name"></div>
+        <p>Any other info go here</p>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Timeline Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.timeline/1.4.3/leaflet.timeline.min.js"></script>
+    
+    <!-- noUiSlider for better timeline control -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    
+{% endblock %}
